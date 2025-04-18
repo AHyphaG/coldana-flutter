@@ -16,18 +16,18 @@ abstract class CalendarState extends Equatable {
 
 class CalendarInitial extends CalendarState {}
 
-class CalendarDatesLoaded extends CalendarState {
-  final DateTime focusedDay;
-  final DateTime? selectedDay;
+// class CalendarDatesLoaded extends CalendarState {
+//   final DateTime focusedDay;
+//   final DateTime? selectedDay;
 
-  CalendarDatesLoaded({
-    required this.focusedDay,
-    this.selectedDay,
-  });
+//   CalendarDatesLoaded({
+//     required this.focusedDay,
+//     this.selectedDay,
+//   });
 
-  @override
-  List<Object?> get props => [focusedDay, selectedDay];
-}
+//   @override
+//   List<Object?> get props => [focusedDay, selectedDay];
+// }
 
 class ExpensesLoading extends CalendarState {}
 
@@ -47,4 +47,19 @@ class ExpensesError extends CalendarState {
 
   @override
   List<Object> get props => [message];
+}
+
+class CalendarDatesLoaded extends CalendarState {
+  final DateTime focusedDay;
+  final DateTime? selectedDay;
+  final CalendarFormat calendarFormat;
+
+  CalendarDatesLoaded({
+    required this.focusedDay,
+    this.selectedDay,
+    this.calendarFormat = CalendarFormat.month,
+  });
+
+  @override
+  List<Object?> get props => [focusedDay, selectedDay, calendarFormat];
 }

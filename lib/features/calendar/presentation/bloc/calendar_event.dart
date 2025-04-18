@@ -1,12 +1,5 @@
 part of 'calendar_bloc.dart';
 
-// abstract class CalendarEvent extends Equatable {
-//   const CalendarEvent();
-
-//   @override
-//   List<Object> get props => [];
-// }
-
 abstract class CalendarEvent extends Equatable {
   @override
   List<Object> get props => [];
@@ -32,4 +25,39 @@ class FetchExpensesEvent extends CalendarEvent {
 
   @override
   List<Object> get props => [date];
+}
+
+class FetchMonthExpensesEvent extends CalendarEvent {
+  final String startDate;
+  final String endDate;
+
+  FetchMonthExpensesEvent({required this.startDate, required this.endDate});
+  
+  @override
+  List<Object> get props => [startDate, endDate];
+}
+
+class UpdateExpenseEvent extends CalendarEvent {
+  final String categoryId;
+  final double amount;
+  final String date;
+
+  UpdateExpenseEvent({
+    required this.categoryId,
+    required this.amount,
+    required this.date,
+  });
+
+  @override
+  List<Object> get props => [categoryId, amount, date];
+}
+
+
+class ChangeCalendarFormatEvent extends CalendarEvent {
+  final CalendarFormat format;
+
+  ChangeCalendarFormatEvent(this.format);
+
+  @override
+  List<Object> get props => [format];
 }

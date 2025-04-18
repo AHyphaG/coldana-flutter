@@ -1,3 +1,4 @@
+import 'package:coldana_flutter/features/calendar/domain/usecases/update_expense.dart';
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 
@@ -12,11 +13,15 @@ final sl = GetIt.instance;
 void init() {
   // BLoC
   sl.registerFactory(
-    () => CalendarBloc(getExpensesForDate: sl()),
+    () => CalendarBloc(getMonthExpenses: sl(),
+    updateExpense: sl(),
+    ),
   );
 
   // Use cases
-  sl.registerLazySingleton(() => GetExpensesForDate(sl()));
+  // sl.registerLazySingleton(() => GetExpensesForDate(sl()));
+  sl.registerLazySingleton(() => GetMonthExpenses(sl()));
+  sl.registerLazySingleton(() => UpdateExpense(sl()));
 
   // Repository
   sl.registerLazySingleton<ExpenseRepository>(
@@ -27,7 +32,8 @@ void init() {
   sl.registerLazySingleton<ExpenseRemoteDataSource>(
     () => ExpenseRemoteDataSourceImpl(
       client: sl(),
-      baseUrl: 'https://your-api-base-url.com',
+      // baseUrl: 'https://your-api-base-url.com',
+      baseUrl: 'http://localhost:8080',
     ),
   );
 
