@@ -15,9 +15,9 @@ class CalendarPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Calendar'),
-      ),
+      // appBar: AppBar(
+      //   title: const Text('Calendar'),
+      // ),
       body: BlocBuilder<CalendarBloc, CalendarState>(
         builder: (context, state) {
           final calendarBloc = BlocProvider.of<CalendarBloc>(context);

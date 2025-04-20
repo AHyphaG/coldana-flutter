@@ -61,3 +61,33 @@ class ChangeCalendarFormatEvent extends CalendarEvent {
   @override
   List<Object> get props => [format];
 }
+
+class LoadCategoriesEvent extends CalendarEvent{}
+
+// class AddCategoryExpenseEvent extends CalendarEvent{
+//   final String categoryId;
+//   final double amount;
+//   final String date;
+
+//   AddCategoryExpenseEvent({required this.categoryId, required this.amount , required this.date});
+
+//   @override
+//   List<Object> get props => [categoryId, amount, date];
+// }
+
+class AddCategoryExpenseEvent extends CalendarEvent {
+  final String categoryId;
+  final String categoryName; // Add this field
+  final double amount;
+  final String date;
+
+  AddCategoryExpenseEvent({
+    required this.categoryId,
+    required this.categoryName, // New required field
+    required this.amount,
+    required this.date,
+  });
+
+  @override
+  List<Object> get props => [categoryId, categoryName, amount, date];
+}

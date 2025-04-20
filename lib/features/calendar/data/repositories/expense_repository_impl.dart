@@ -27,4 +27,18 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
       date: date,
     );
   }
+
+  @override
+  Future<void> addExpense({
+    required String categoryId,
+    required double amount,
+    required String date,
+  }) async {
+    return await remoteDataSource.updateExpense(
+      categoryId: categoryId,
+      amount: amount,
+      date: date,
+    );
+  }
+
 }

@@ -1,3 +1,9 @@
+import 'package:coldana_flutter/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:coldana_flutter/features/calendar/data/datasources/category_remote_data_source.dart';
+import 'package:coldana_flutter/features/calendar/data/repositories/category_repository_impl.dart';
+import 'package:coldana_flutter/features/calendar/domain/repositories/category_repository.dart';
+import 'package:coldana_flutter/features/calendar/domain/usecases/add_category_expense.dart';
+import 'package:coldana_flutter/features/calendar/domain/usecases/get_categories.dart';
 import 'package:coldana_flutter/features/calendar/domain/usecases/update_expense.dart';
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
@@ -13,8 +19,11 @@ final sl = GetIt.instance;
 void init() {
   // BLoC
   sl.registerFactory(
-    () => CalendarBloc(getMonthExpenses: sl(),
-    updateExpense: sl(),
+    () => CalendarBloc(
+      getMonthExpenses: sl(),
+      updateExpense: sl(),
+      getCategories: sl(),
+      addCategoryExpense: sl(),
     ),
   );
 
@@ -22,21 +31,34 @@ void init() {
   // sl.registerLazySingleton(() => GetExpensesForDate(sl()));
   sl.registerLazySingleton(() => GetMonthExpenses(sl()));
   sl.registerLazySingleton(() => UpdateExpense(sl()));
+  sl.registerLazySingleton(() => GetCategories(sl()));
+sl.registerLazySingleton(() => AddCategoryExpense(sl()));
 
   // Repository
   sl.registerLazySingleton<ExpenseRepository>(
     () => ExpenseRepositoryImpl(remoteDataSource: sl()),
   );
+  sl.registerLazySingleton<CategoryRepository>(
+  () => CategoryRepositoryImpl(remoteDataSource: sl()),
+);
 
   // Data sources
   sl.registerLazySingleton<ExpenseRemoteDataSource>(
     () => ExpenseRemoteDataSourceImpl(
-      client: sl(),
+      client: sl<http.Client>(),
       // baseUrl: 'https://your-api-base-url.com',
       baseUrl: 'http://localhost:8080',
+      authLocalDataSource: sl<AuthLocalDataSource>(),
     ),
   );
+  sl.registerLazySingleton<CategoryRemoteDataSource>(
+  () => CategoryRemoteDataSourceImpl(
+    client: sl<http.Client>(),
+    baseUrl: 'http://localhost:8080',
+    authLocalDataSource: sl<AuthLocalDataSource>(),
+  ),
+);
 
   // External
-  sl.registerLazySingleton(() => http.Client());
+  // sl.registerLazySingleton(() => http.Client()); // Sudah diregister di lib/injection_container.dart
 }

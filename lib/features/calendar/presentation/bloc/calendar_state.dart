@@ -63,3 +63,19 @@ class CalendarDatesLoaded extends CalendarState {
   @override
   List<Object?> get props => [focusedDay, selectedDay, calendarFormat];
 }
+
+class CategoriesLoaded extends CalendarState{
+  final List<ExpenseCategory> categories;
+  CategoriesLoaded(this.categories);
+  @override
+  List<Object> get props => [categories];
+}
+
+class CategoryExpenseAdded extends CalendarState {
+  final String message;
+
+  CategoryExpenseAdded(this.message);
+
+  @override
+  List<Object> get props => [message];
+}

@@ -1,12 +1,19 @@
 import 'package:bloc/bloc.dart';
+import 'package:coldana_flutter/features/calendar/domain/entities/expense.dart';
 import 'package:coldana_flutter/features/calendar/domain/usecases/update_expense.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+// Entities
 import '../../domain/entities/expense_response.dart';
-import '../../domain/usecases/get_expenses_for_date.dart';
+import '../../domain/entities/category.dart';
 
+// UseCases
+import '../../domain/usecases/get_expenses_for_date.dart';
+import '../../domain/usecases/get_categories.dart';
+import '../../domain/usecases/add_category_expense.dart';
 
 part 'calendar_event.dart';
 part 'calendar_state.dart';
@@ -22,6 +29,9 @@ part 'calendar_state.dart';
 class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
   final GetMonthExpenses getMonthExpenses;
   final UpdateExpense updateExpense;
+  final GetCategories getCategories;
+  final AddCategoryExpense addCategoryExpense;
+
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   CalendarFormat _calendarFormat = CalendarFormat.month;
@@ -32,8 +42,12 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
   DateTime? get selectedDay => _selectedDay;
   CalendarFormat get calendarFormat => _calendarFormat;
 
-  CalendarBloc({required this.getMonthExpenses,required this.updateExpense, }) 
-      : super(CalendarDatesLoaded(
+  CalendarBloc({
+    required this.getMonthExpenses,
+    required this.updateExpense,
+    required this.getCategories,
+    required this.addCategoryExpense
+  }) : super(CalendarDatesLoaded(
           focusedDay: DateTime.now(),
           selectedDay: DateTime.now(),
         )) {
@@ -43,6 +57,8 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     on<FetchMonthExpensesEvent>(_onFetchMonthExpenses);
     on<UpdateExpenseEvent>(_onUpdateExpense);
     on<ChangeCalendarFormatEvent>(_onChangeCalendarFormat);
+    on<LoadCategoriesEvent>(_onLoadCategories);
+    on<AddCategoryExpenseEvent>(_onAddCategoryExpense);
     
     // Initialize with current month data
     _initializeCalendar();
@@ -115,26 +131,56 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
   }
 
   void _onUpdateExpense(UpdateExpenseEvent event, Emitter<CalendarState> emit) async {
-  emit(ExpensesLoading());
-  
-  try {
-    await updateExpense.execute(
-      categoryId: event.categoryId,
-      amount: event.amount,
-      date: event.date,
-    );
+    emit(ExpensesLoading());
     
-    // After successful update, refresh the data for the current month
-    final firstDayOfMonth = DateTime(_selectedDay!.year, _selectedDay!.month, 1);
-    final lastDayOfMonth = DateTime(_selectedDay!.year, _selectedDay!.month + 1, 0);
-    
-    final startDate = "${firstDayOfMonth.year}-${firstDayOfMonth.month.toString().padLeft(2, '0')}-${firstDayOfMonth.day.toString().padLeft(2, '0')}";
-    final endDate = "${lastDayOfMonth.year}-${lastDayOfMonth.month.toString().padLeft(2, '0')}-${lastDayOfMonth.day.toString().padLeft(2, '0')}";
-    
-    add(FetchMonthExpensesEvent(startDate: startDate, endDate: endDate));
-  } catch (e) {
-    emit(ExpensesError(e.toString()));
+    try {
+      await updateExpense.execute(
+        categoryId: event.categoryId,
+        amount: event.amount,
+        date: event.date,
+      );
+      
+      // After successful update, refresh the data for the current month
+      final firstDayOfMonth = DateTime(_selectedDay!.year, _selectedDay!.month, 1);
+      final lastDayOfMonth = DateTime(_selectedDay!.year, _selectedDay!.month + 1, 0);
+      
+      final startDate = "${firstDayOfMonth.year}-${firstDayOfMonth.month.toString().padLeft(2, '0')}-${firstDayOfMonth.day.toString().padLeft(2, '0')}";
+      final endDate = "${lastDayOfMonth.year}-${lastDayOfMonth.month.toString().padLeft(2, '0')}-${lastDayOfMonth.day.toString().padLeft(2, '0')}";
+      
+      add(FetchMonthExpensesEvent(startDate: startDate, endDate: endDate));
+    } catch (e) {
+      emit(ExpensesError(e.toString()));
+    }
   }
-}
+
+  void _onLoadCategories(LoadCategoriesEvent event, Emitter<CalendarState> emit) async{
+    emit(ExpensesLoading());
+
+    try{
+      final categories = await getCategories.execute(isDaily: false);
+      emit(CategoriesLoaded(categories));
+    }catch(e){
+      emit(ExpensesError(e.toString()));
+    }
+  }
+
+  void _onAddCategoryExpense(AddCategoryExpenseEvent event, Emitter<CalendarState> emit) async{
+    emit(ExpensesLoading());
+
+    try{
+      await addCategoryExpense.execute(categoryId: event.categoryId, amount: event.amount, date: event.date);
+      
+      final firstDayOfMonth = DateTime(_selectedDay!.year, _selectedDay!.month, 1);
+      final lastDayOfMonth = DateTime(_selectedDay!.year, _selectedDay!.month + 1, 0);
+      
+      final startDate = "${firstDayOfMonth.year}-${firstDayOfMonth.month.toString().padLeft(2, '0')}-${firstDayOfMonth.day.toString().padLeft(2, '0')}";
+      final endDate = "${lastDayOfMonth.year}-${lastDayOfMonth.month.toString().padLeft(2, '0')}-${lastDayOfMonth.day.toString().padLeft(2, '0')}";
+      
+      add(FetchMonthExpensesEvent(startDate: startDate, endDate: endDate));
+    }catch(e){
+      emit(ExpensesError(e.toString()));
+    }
+  }
+
 
 }

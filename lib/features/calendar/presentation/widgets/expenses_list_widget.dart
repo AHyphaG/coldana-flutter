@@ -1,4 +1,6 @@
+import 'package:coldana_flutter/features/calendar/presentation/bloc/calendar_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/expense.dart';
 
 class ExpensesListWidget extends StatelessWidget {
@@ -20,14 +22,29 @@ class ExpensesListWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Text(
-            'Category Expenses',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
+        Row(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Text(
+                'Category Expenses',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: IconButton(
+                icon: const Icon(Icons.add_circle),
+                tooltip: 'Add Category Expense',
+                onPressed: () {
+                  context.read<CalendarBloc>().add(LoadCategoriesEvent());
+                  _showAddCategoryExpenseDialog(context);
+                },
+              ),
+            )
+          ],
         ),
         Expanded(
           child: ListView.builder(
@@ -97,4 +114,98 @@ class ExpensesListWidget extends StatelessWidget {
       ),
     );
   }
+}
+
+void _showAddCategoryExpenseDialog(BuildContext context){
+  final amountController = TextEditingController();
+  String?  selectedCategoryId;
+
+  final CalendarBloc calendarBloc = context.read<CalendarBloc>();
+  final selectedDay = calendarBloc.selectedDay ?? DateTime.now();
+  final formattedDate = "${selectedDay.year}-${selectedDay.month.toString().padLeft(2, '0')}-${selectedDay.day.toString().padLeft(2, '0')}";
+
+  showDialog(
+    context: context, 
+    builder: (context) {
+      return BlocBuilder<CalendarBloc, CalendarState>(
+        builder: (context, state){
+          if (state is CategoriesLoaded){
+            final categories = state.categories;
+
+            return AlertDialog(
+              title: const Text('Add Category Expense'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButtonFormField<String>(
+                      decoration: const InputDecoration(
+                        labelText: 'Category',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: categories.map((category) {
+                        return DropdownMenuItem(
+                          value: category.categoryId,
+                          child: Text(category.name),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        selectedCategoryId = value;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: amountController,
+                      decoration: const InputDecoration(
+                        labelText: 'Amount',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ],
+                ),
+              ),
+
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (selectedCategoryId != null && amountController.text.isNotEmpty) {
+                      // Process the form
+                      final amount = double.parse(amountController.text);
+                      
+                      // Add the expense through CalendarBloc
+                      context.read<CalendarBloc>().add(
+                        AddCategoryExpenseEvent(
+                          categoryId: selectedCategoryId!,
+                          categoryName: categories.firstWhere((c) => c.categoryId == selectedCategoryId).name, // Get name from selected category
+                          amount: amount,
+                          date: formattedDate,
+                        ),
+                      );
+                      
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: const Text('Add'),
+                ),
+              ],
+            );
+          }
+
+          return const AlertDialog(
+            content: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+
+          
+        },
+      );
+    }
+  );
+
 }
