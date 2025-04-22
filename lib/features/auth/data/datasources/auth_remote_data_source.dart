@@ -3,10 +3,10 @@ import 'package:http/http.dart' as http;
 import '../models/user_model.dart';
 
 abstract class AuthRemoteDataSource {
-  Future<Map<String,dynamic>> login(String username, String password);
+  Future<Map<String, dynamic>> login(String username, String password);
 }
 
-class AuthRemoteDataSourceImpl implements AuthRemoteDataSource{
+class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final http.Client client;
   final String baseUrl;
 
@@ -17,15 +17,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource{
     final response = await client.post(
       Uri.parse('$baseUrl/api/auth/login'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'username': username,
-        'password': password,
-      }),
+      body: json.encode({'username': username, 'password': password}),
     );
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseData = json.decode(response.body);
       return responseData;
+    } else if (response.statusCode == 401) {
+      final Map<String, dynamic> errorData = json.decode(response.body);
+      throw Exception(errorData['message']);
     } else {
       throw Exception('Failed to login');
     }

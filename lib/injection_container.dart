@@ -11,7 +11,8 @@ import 'package:coldana_flutter/features/auth/domain/usecases/is_logged_in.dart'
 import 'package:coldana_flutter/features/auth/domain/usecases/login.dart';
 import 'package:coldana_flutter/features/auth/domain/usecases/logout.dart';
 import 'package:coldana_flutter/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:coldana_flutter/features/calendar/injection_container.dart' as calendar_di;
+import 'package:coldana_flutter/features/calendar/injection_container.dart'
+    as calendar_di;
 
 final sl = GetIt.instance;
 
@@ -35,24 +36,20 @@ Future<void> init() async {
 
   // Repository
   sl.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(
-      remoteDataSource: sl(),
-      localDataSource: sl(),
-    ),
+    () => AuthRepositoryImpl(remoteDataSource: sl(), localDataSource: sl()),
   );
 
   // Data sources
   sl.registerLazySingleton<AuthRemoteDataSource>(
     () => AuthRemoteDataSourceImpl(
       client: sl(),
-      baseUrl: 'http://localhost:8080', // Use your API base URL
+      // baseUrl: 'http://localhost:8080', // If Using other than android emulator
+      baseUrl: 'http://10.0.2.2:8080',
     ),
   );
 
   sl.registerLazySingleton<AuthLocalDataSource>(
-    () => AuthLocalDataSourceImpl(
-      sharedPreferences: sl(),
-    ),
+    () => AuthLocalDataSourceImpl(sharedPreferences: sl()),
   );
 
   // External

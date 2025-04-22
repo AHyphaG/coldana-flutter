@@ -12,9 +12,13 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
   //   return await remoteDataSource.getExpensesForDate(date);
   // }
   @override
-  Future<List<ExpenseResponse>> getExpensesForDateRange(String startDate, String endDate) async {
+  Future<List<ExpenseResponse>> getExpensesForDateRange(
+    String startDate,
+    String endDate,
+  ) async {
     return await remoteDataSource.getExpensesForDateRange(startDate, endDate);
   }
+
   @override
   Future<void> updateExpense({
     required String categoryId,
@@ -34,11 +38,25 @@ class ExpenseRepositoryImpl implements ExpenseRepository {
     required double amount,
     required String date,
   }) async {
-    return await remoteDataSource.updateExpense(
+    return await remoteDataSource.addExpense(
       categoryId: categoryId,
       amount: amount,
       date: date,
     );
   }
 
+  @override
+  Future<void> addOtherExpense({
+    required String id,
+    required String description,
+    required double amount,
+    required String date,
+  }) async {
+    return await remoteDataSource.addOtherExpense(
+      id: id,
+      description: description,
+      amount: amount,
+      date: date,
+    );
+  }
 }

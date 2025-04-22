@@ -22,24 +22,24 @@ class CategoryRemoteDataSourceImpl implements CategoryRemoteDataSource {
   Future<List<CategoryModel>> getCategories({required bool isDaily}) async {
     try {
       final token = await authLocalDataSource.getToken();
-      
+
       if (token == null) {
         throw Exception('Authentication token not found');
       }
-      
+
       final response = await client.get(
-        Uri.parse('$baseUrl/api/categories?isDaily=${isDaily ? 'true' : 'false'}'),
+        Uri.parse(
+          '$baseUrl/api/categories?isDaily=${isDaily ? 'true' : 'false'}',
+        ),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token'
+          'Authorization': 'Bearer $token',
         },
       );
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = json.decode(response.body);
-        return jsonList
-            .map((json) => CategoryModel.fromJson(json))
-            .toList();
+        return jsonList.map((json) => CategoryModel.fromJson(json)).toList();
       } else {
         throw Exception('Failed to load categories');
       }

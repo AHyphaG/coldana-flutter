@@ -8,11 +8,11 @@ import 'package:table_calendar/table_calendar.dart';
 
 // Entities
 import '../../domain/entities/expense_response.dart';
-import '../../domain/entities/category.dart';
+import '../../../category/domain/entities/category.dart';
 
 // UseCases
 import '../../domain/usecases/get_expenses_for_date.dart';
-import '../../domain/usecases/get_categories.dart';
+import '../../../category/domain/usecases/get_categories.dart';
 import '../../domain/usecases/add_category_expense.dart';
 
 part 'calendar_event.dart';
@@ -46,51 +46,61 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     required this.getMonthExpenses,
     required this.updateExpense,
     required this.getCategories,
-    required this.addCategoryExpense
-  }) : super(CalendarDatesLoaded(
-          focusedDay: DateTime.now(),
-          selectedDay: DateTime.now(),
-        )) {
+    required this.addCategoryExpense,
+  }) : super(
+         CalendarDatesLoaded(
+           focusedDay: DateTime.now(),
+           selectedDay: DateTime.now(),
+         ),
+       ) {
     _selectedDay = _focusedDay;
-    
+
     on<SelectDateEvent>(_onSelectDate);
     on<FetchMonthExpensesEvent>(_onFetchMonthExpenses);
     on<UpdateExpenseEvent>(_onUpdateExpense);
     on<ChangeCalendarFormatEvent>(_onChangeCalendarFormat);
     on<LoadCategoriesEvent>(_onLoadCategories);
     on<AddCategoryExpenseEvent>(_onAddCategoryExpense);
-    
+
     // Initialize with current month data
     _initializeCalendar();
   }
-  
+
   void _initializeCalendar() {
     final now = DateTime.now();
     final firstDay = DateTime(now.year, now.month, 1);
     final lastDay = DateTime(now.year, now.month + 1, 0);
-    
-    final startDate = "${firstDay.year}-${firstDay.month.toString().padLeft(2, '0')}-${firstDay.day.toString().padLeft(2, '0')}";
-    final endDate = "${lastDay.year}-${lastDay.month.toString().padLeft(2, '0')}-${lastDay.day.toString().padLeft(2, '0')}";
-    
+
+    final startDate =
+        "${firstDay.year}-${firstDay.month.toString().padLeft(2, '0')}-${firstDay.day.toString().padLeft(2, '0')}";
+    final endDate =
+        "${lastDay.year}-${lastDay.month.toString().padLeft(2, '0')}-${lastDay.day.toString().padLeft(2, '0')}";
+
     add(FetchMonthExpensesEvent(startDate: startDate, endDate: endDate));
   }
 
-  void _onChangeCalendarFormat(ChangeCalendarFormatEvent event, Emitter<CalendarState> emit) {
+  void _onChangeCalendarFormat(
+    ChangeCalendarFormatEvent event,
+    Emitter<CalendarState> emit,
+  ) {
     _calendarFormat = event.format;
-    
-    emit(CalendarDatesLoaded(
-      focusedDay: _focusedDay,
-      selectedDay: _selectedDay,
-      calendarFormat: _calendarFormat,
-    ));
+
+    emit(
+      CalendarDatesLoaded(
+        focusedDay: _focusedDay,
+        selectedDay: _selectedDay,
+        calendarFormat: _calendarFormat,
+      ),
+    );
   }
 
   void _onSelectDate(SelectDateEvent event, Emitter<CalendarState> emit) {
     _selectedDay = event.selectedDate;
     _focusedDay = event.focusedDate;
-    
-    final formattedDate = "${_selectedDay!.year}-${_selectedDay!.month.toString().padLeft(2, '0')}-${_selectedDay!.day.toString().padLeft(2, '0')}";
-    
+
+    final formattedDate =
+        "${_selectedDay!.year}-${_selectedDay!.month.toString().padLeft(2, '0')}-${_selectedDay!.day.toString().padLeft(2, '0')}";
+
     // If we already have month data, use it instead of fetching again
     if (_monthData.containsKey(formattedDate)) {
       emit(ExpensesLoaded(_monthData[formattedDate]!));
@@ -98,29 +108,38 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
       // If we need to fetch data for a new month
       final firstDay = DateTime(_selectedDay!.year, _selectedDay!.month, 1);
       final lastDay = DateTime(_selectedDay!.year, _selectedDay!.month + 1, 0);
-      
-      final startDate = "${firstDay.year}-${firstDay.month.toString().padLeft(2, '0')}-${firstDay.day.toString().padLeft(2, '0')}";
-      final endDate = "${lastDay.year}-${lastDay.month.toString().padLeft(2, '0')}-${lastDay.day.toString().padLeft(2, '0')}";
-      
+
+      final startDate =
+          "${firstDay.year}-${firstDay.month.toString().padLeft(2, '0')}-${firstDay.day.toString().padLeft(2, '0')}";
+      final endDate =
+          "${lastDay.year}-${lastDay.month.toString().padLeft(2, '0')}-${lastDay.day.toString().padLeft(2, '0')}";
+
       add(FetchMonthExpensesEvent(startDate: startDate, endDate: endDate));
     }
   }
-  
-  void _onFetchMonthExpenses(FetchMonthExpensesEvent event, Emitter<CalendarState> emit) async {
+
+  void _onFetchMonthExpenses(
+    FetchMonthExpensesEvent event,
+    Emitter<CalendarState> emit,
+  ) async {
     emit(ExpensesLoading());
-    
+
     try {
-      final monthResponses = await getMonthExpenses.execute(event.startDate, event.endDate);
-      
+      final monthResponses = await getMonthExpenses.execute(
+        event.startDate,
+        event.endDate,
+      );
+
       // Store month data for easy access
       _monthData = {};
       for (var dayResponse in monthResponses) {
         _monthData[dayResponse.date] = dayResponse;
       }
-      
+
       // If a day is selected, show its data
       if (_selectedDay != null) {
-        final formattedDate = "${_selectedDay!.year}-${_selectedDay!.month.toString().padLeft(2, '0')}-${_selectedDay!.day.toString().padLeft(2, '0')}";
+        final formattedDate =
+            "${_selectedDay!.year}-${_selectedDay!.month.toString().padLeft(2, '0')}-${_selectedDay!.day.toString().padLeft(2, '0')}";
         if (_monthData.containsKey(formattedDate)) {
           emit(ExpensesLoaded(_monthData[formattedDate]!));
         }
@@ -130,57 +149,88 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     }
   }
 
-  void _onUpdateExpense(UpdateExpenseEvent event, Emitter<CalendarState> emit) async {
+  void _onUpdateExpense(
+    UpdateExpenseEvent event,
+    Emitter<CalendarState> emit,
+  ) async {
     emit(ExpensesLoading());
-    
+
     try {
       await updateExpense.execute(
         categoryId: event.categoryId,
         amount: event.amount,
         date: event.date,
       );
-      
+
       // After successful update, refresh the data for the current month
-      final firstDayOfMonth = DateTime(_selectedDay!.year, _selectedDay!.month, 1);
-      final lastDayOfMonth = DateTime(_selectedDay!.year, _selectedDay!.month + 1, 0);
-      
-      final startDate = "${firstDayOfMonth.year}-${firstDayOfMonth.month.toString().padLeft(2, '0')}-${firstDayOfMonth.day.toString().padLeft(2, '0')}";
-      final endDate = "${lastDayOfMonth.year}-${lastDayOfMonth.month.toString().padLeft(2, '0')}-${lastDayOfMonth.day.toString().padLeft(2, '0')}";
-      
+      final firstDayOfMonth = DateTime(
+        _selectedDay!.year,
+        _selectedDay!.month,
+        1,
+      );
+      final lastDayOfMonth = DateTime(
+        _selectedDay!.year,
+        _selectedDay!.month + 1,
+        0,
+      );
+
+      final startDate =
+          "${firstDayOfMonth.year}-${firstDayOfMonth.month.toString().padLeft(2, '0')}-${firstDayOfMonth.day.toString().padLeft(2, '0')}";
+      final endDate =
+          "${lastDayOfMonth.year}-${lastDayOfMonth.month.toString().padLeft(2, '0')}-${lastDayOfMonth.day.toString().padLeft(2, '0')}";
+
       add(FetchMonthExpensesEvent(startDate: startDate, endDate: endDate));
     } catch (e) {
       emit(ExpensesError(e.toString()));
     }
   }
 
-  void _onLoadCategories(LoadCategoriesEvent event, Emitter<CalendarState> emit) async{
+  void _onLoadCategories(
+    LoadCategoriesEvent event,
+    Emitter<CalendarState> emit,
+  ) async {
     emit(ExpensesLoading());
 
-    try{
+    try {
       final categories = await getCategories.execute(isDaily: false);
       emit(CategoriesLoaded(categories));
-    }catch(e){
+    } catch (e) {
       emit(ExpensesError(e.toString()));
     }
   }
 
-  void _onAddCategoryExpense(AddCategoryExpenseEvent event, Emitter<CalendarState> emit) async{
+  void _onAddCategoryExpense(
+    AddCategoryExpenseEvent event,
+    Emitter<CalendarState> emit,
+  ) async {
     emit(ExpensesLoading());
 
-    try{
-      await addCategoryExpense.execute(categoryId: event.categoryId, amount: event.amount, date: event.date);
-      
-      final firstDayOfMonth = DateTime(_selectedDay!.year, _selectedDay!.month, 1);
-      final lastDayOfMonth = DateTime(_selectedDay!.year, _selectedDay!.month + 1, 0);
-      
-      final startDate = "${firstDayOfMonth.year}-${firstDayOfMonth.month.toString().padLeft(2, '0')}-${firstDayOfMonth.day.toString().padLeft(2, '0')}";
-      final endDate = "${lastDayOfMonth.year}-${lastDayOfMonth.month.toString().padLeft(2, '0')}-${lastDayOfMonth.day.toString().padLeft(2, '0')}";
-      
+    try {
+      await addCategoryExpense.execute(
+        categoryId: event.categoryId,
+        amount: event.amount,
+        date: event.date,
+      );
+
+      final firstDayOfMonth = DateTime(
+        _selectedDay!.year,
+        _selectedDay!.month,
+        1,
+      );
+      final lastDayOfMonth = DateTime(
+        _selectedDay!.year,
+        _selectedDay!.month + 1,
+        0,
+      );
+
+      final startDate =
+          "${firstDayOfMonth.year}-${firstDayOfMonth.month.toString().padLeft(2, '0')}-${firstDayOfMonth.day.toString().padLeft(2, '0')}";
+      final endDate =
+          "${lastDayOfMonth.year}-${lastDayOfMonth.month.toString().padLeft(2, '0')}-${lastDayOfMonth.day.toString().padLeft(2, '0')}";
+
       add(FetchMonthExpensesEvent(startDate: startDate, endDate: endDate));
-    }catch(e){
+    } catch (e) {
       emit(ExpensesError(e.toString()));
     }
   }
-
-
 }
